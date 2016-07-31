@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+    <item
+        android:id="@+id/action_toggle_mode"
+        android:orderInCategory="100"
+        android:title="Show ALL"
+        android:textColor="@color/white"
+        app:showAsAction="always" />
+
+    <item android:id="@+id/action_logout"
+        android:title="@string/action_logout"
+        android:orderInCategory="100"
+        android:textColor="@color/white"
+        app:showAsAction="always" />
+</menu>

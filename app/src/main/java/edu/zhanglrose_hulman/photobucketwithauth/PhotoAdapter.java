@@ -23,18 +23,34 @@ import java.util.List;
 public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
     private List<Photo> mPhotos;
     public PhotoListFragment.Callback mCallback;
+    private PhotoChildEventListener mPhotosMine;
+    private PhotoChildEventListener mPhotosAll;
     public PhotoListFragment mFragment;
     private DatabaseReference mPhotosRef;
+    private String mUid;
 
-    public PhotoAdapter(PhotoListFragment.Callback callback, Context context, PhotoListFragment fragment) {
+    public PhotoAdapter(PhotoListFragment.Callback callback, Context context, PhotoListFragment fragment,String uid) {
+        mUid = uid;
         mCallback = callback;
         mPhotos = new ArrayList<>();
         mFragment = fragment;
+        mPhotosMine = new PhotoChildEventListener();
+        mPhotosAll = new PhotoChildEventListener();
         mPhotosRef = FirebaseDatabase.getInstance().getReference().child("photos");
-        mPhotosRef.addChildEventListener(new PhotoChildEventListener());
+        mPhotosRef.addChildEventListener(mPhotosAll);
+        mPhotosRef.orderByChild("uid").equalTo(mUid)
+                .addChildEventListener(mPhotosMine);
+        mPhotos = mPhotosMine;
     }
 
 
+    public void toggleShowAll(boolean showAll) {
+        if (showAll)
+            mPhotos = mPhotosAll;
+        else
+            mPhotos = mPhotosMine;
+        notifyDataSetChanged();
+    }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -102,7 +118,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
     }
 
 
-    class PhotoChildEventListener implements ChildEventListener {
+    class PhotoChildEventListener extends ArrayList<Photo> implements ChildEventListener {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
             Photo photo = dataSnapshot.getValue(Photo.class);
@@ -122,7 +138,6 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
                     break;
                 }
             }
-
             notifyDataSetChanged();
 
         }
@@ -151,6 +166,9 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
             Log.e(Constants.TAG,"DataBase error: " + databaseError);
         }
     }
-
+    interface Callback {
+        void onDisplay(Photo photo);
+        void showAddEditDeleteDialog(Photo photo);
+    }
 
 }

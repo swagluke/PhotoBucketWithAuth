@@ -14,14 +14,24 @@ public class Photo implements Parcelable {
     private String url;
     private String key;
 
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    private String uid;
 
     public Photo(){
         // Need to have the empty one.
     }
 
-    public Photo(String name, String url){
+    public Photo(String name, String url,String uid){
         this.caption = name;
         this.url = url;
+        this.uid = uid;
     }
 
     protected Photo(Parcel in) {

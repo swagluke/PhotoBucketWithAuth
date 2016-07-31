@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -14,29 +15,49 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Toast;
 
 /**
  * Created by lukezhang on 7/20/16.
  */
-public class PhotoListFragment extends Fragment {
-
-    private OnLogoutListener mListener;
+public class PhotoListFragment extends Fragment implements Toolbar.OnMenuItemClickListener, View.OnClickListener {
     private Callback mCallback;
     public PhotoAdapter mPhotoAdapter;
+    private boolean showAll = false;
+    private String mUid;
 
-    public PhotoListFragment()
-    {
+    public PhotoListFragment() {
         // Need to have the empty one.
     }
+
+    public static PhotoListFragment newInstance(String uid) {
+        PhotoListFragment fragment = new PhotoListFragment();
+        Bundle args = new Bundle();
+        args.putString("user id", uid);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle argument = getArguments();
+        if (argument != null) {
+            mUid = argument.getString("user id");
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        /*View rootView = inflater.inflate(R.layout.fragment_password, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_pic_list, container, false);
         // Setup Toolbar
         Toolbar mToolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
         mToolbar.setTitle(R.string.app_name);
@@ -44,27 +65,23 @@ public class PhotoListFragment extends Fragment {
         mToolbar.setOnMenuItemClickListener(this);
         mToolbar.setTitleTextColor(getResources().getColor(R.color.white));
         final View fab = rootView.findViewById(R.id.fab_add);
-        fab.setOnClickListener(this);
-        */
-        RecyclerView view = (RecyclerView)inflater.inflate(R.layout.fragment_pic_list, container, false);
-        //Toolbar mToolbar = (Toolbar) view.findViewById(R.id.toolbar);
-
-        view.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        final View fab = view.findViewById(R.id.fab_add);
         //FloatingActionButton fab = (view.findViewById(R.id.fab_add));
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(View rootView) {
                 showAddEditDeleteDialog(null);
             }
         });
+        RecyclerView photolist = (RecyclerView) rootView.findViewById(R.id.photo_list);
+        LinearLayoutManager manager = new LinearLayoutManager(getActivity());
+        manager.setOrientation(LinearLayoutManager.VERTICAL);
+        photolist.setLayoutManager(manager);
+        mPhotoAdapter = new PhotoAdapter(mCallback, getContext(), this, mUid);
+        photolist.setAdapter(mPhotoAdapter);
 
-        mPhotoAdapter = new PhotoAdapter(mCallback, getContext(), this);
-        view.setAdapter(mPhotoAdapter);
-
-        return view;
+        return rootView;
     }
+
 
     @Override
     public void onAttach(Context context) {
@@ -83,11 +100,42 @@ public class PhotoListFragment extends Fragment {
         mCallback = null;
     }
 
+    @Override
+    public void onClick(View v) {
+
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem menuItem) {
+        int id = menuItem.getItemId();
+        switch (id) {
+            case R.id.action_logout:
+                Log.d("PK", "LOGOUT Menu Item Clicked!");
+                mCallback.log_out();
+                return true;
+            case R.id.action_toggle_mode:
+                if (showAll) {
+                    menuItem.setTitle("SHOW ALL");
+                } else {
+                    menuItem.setTitle("SHOW MINE");
+                }
+                showAll = !showAll;
+                mPhotoAdapter.toggleShowAll(showAll);
+        }
+        return false;
+    }
+
     public interface Callback {
         void onDisplay(Photo weatherpic);
+
+        void log_out();
     }
 
     public void showAddEditDeleteDialog(final Photo photo) {
+        if (photo!=null && !mUid.equals(photo.getUid())){
+            Toast.makeText(getView(). getContext(), "This weatherpic belongs to another user", Toast.LENGTH_SHORT).show();
+            return;
+        }
         DialogFragment df = new DialogFragment() {
             @Override
             public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -137,15 +185,15 @@ public class PhotoListFragment extends Fragment {
                     public void onClick(DialogInterface dialog, int which) {
                         String caption = "";
                         String url = "";
+                        String uid = mUid;
                         if (photo == null) {
                             caption = captionEditText.getText().toString();
                             url = urlEditText.getText().toString();
                             if (url.equals("")) {
                                 url = Util.randomImageUrl();
-                                mPhotoAdapter.add(new Photo(caption, url));
+                                mPhotoAdapter.add(new Photo(caption, url,uid));
                             }
                         }
-
                     }
                 });
                 builder.setNegativeButton(android.R.string.cancel, null);
@@ -154,9 +202,5 @@ public class PhotoListFragment extends Fragment {
             }
         };
         df.show(getActivity().getSupportFragmentManager(), "add");
-    }
-
-    public interface OnLogoutListener {
-        void onLogout();
     }
 }
