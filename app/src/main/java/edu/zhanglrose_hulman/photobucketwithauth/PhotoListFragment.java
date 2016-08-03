@@ -65,19 +65,19 @@ public class PhotoListFragment extends Fragment implements Toolbar.OnMenuItemCli
         mToolbar.setOnMenuItemClickListener(this);
         mToolbar.setTitleTextColor(getResources().getColor(R.color.white));
         final View fab = rootView.findViewById(R.id.fab_add);
-        //FloatingActionButton fab = (view.findViewById(R.id.fab_add));
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View rootView) {
                 showAddEditDeleteDialog(null);
             }
         });
-        RecyclerView photolist = (RecyclerView) rootView.findViewById(R.id.photo_list);
-        LinearLayoutManager manager = new LinearLayoutManager(getActivity());
-        manager.setOrientation(LinearLayoutManager.VERTICAL);
-        photolist.setLayoutManager(manager);
+        RecyclerView photolistview = (RecyclerView) rootView.findViewById(R.id.photo_list);
+        LinearLayoutManager manager = new LinearLayoutManager(getContext());
+        photolistview.setLayoutManager(manager);
         mPhotoAdapter = new PhotoAdapter(mCallback, getContext(), this, mUid);
-        photolist.setAdapter(mPhotoAdapter);
+        photolistview.setAdapter(mPhotoAdapter);
+
 
         return rootView;
     }

@@ -63,7 +63,6 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
         final Photo photo = mPhotos.get(position);
         holder.mCaptionTextView.setText(photo.getCaption());
         holder.mUrlTextView.setText(photo.getUrl());
-
     }
 
     @Override

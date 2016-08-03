@@ -12,12 +12,13 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class MainActivity extends AppCompatActivity implements LoginFragment.OnLoginListener,PhotoListFragment.Callback{
+public class MainActivity extends AppCompatActivity implements LoginFragment.OnLoginListener, PhotoListFragment.Callback {
 
     //private static final int RC_SIGN_IN = 1;
     FirebaseAuth mAuth;
     FirebaseAuth.AuthStateListener mAuthStateListener;
     OnCompleteListener mOnCompleteListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,13 +27,14 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.OnL
         //mAuth.signOut();
         initializeListeners();
     }
+
     private void initializeListeners() {
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 //Log.d(Constants.TAG, "User: " + user);
-                Log.d(Constants.TAG, "User: " + user.getUid());
+                //Log.d(Constants.TAG, "User: " + user.getUid());
                 if (user != null) {
                     switchToPhotoListFragment(user.getUid());
                 } else {
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.OnL
             }
         };
     }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -68,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.OnL
         //DONE: Log user in with username & password
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(mOnCompleteListener);
     }
+
     @Override
     public void log_out() {
         switchToLoginFragment();
@@ -84,8 +88,6 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.OnL
     private void switchToPhotoListFragment(String uid) {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment photolistFragment = PhotoListFragment.newInstance(uid);
-        Bundle args = new Bundle();
-        photolistFragment.setArguments(args);
         ft.replace(R.id.fragment, photolistFragment, "PhotoLists");
         ft.commit();
     }
@@ -102,9 +104,9 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.OnL
 
     private void showImageFromUrl(Photo photo) {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        PhotoDetailFragment fragment = PhotoDetailFragment.newInstance(photo);
-        ft.replace(R.id.fragment_container, fragment);
-        ft.addToBackStack("detail");
+        PhotoDetailFragment photodetailFragment = PhotoDetailFragment.newInstance(photo);
+        ft.replace(R.id.fragment, photodetailFragment, "PhotoDetail");
+        ft.addToBackStack("PhotoDetail");
         ft.commit();
     }
 }
