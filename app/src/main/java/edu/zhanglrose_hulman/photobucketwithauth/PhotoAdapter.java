@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Created by lukezhang on 7/20/16.
  */
-public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
+public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> {
     private List<Photo> mPhotos;
     public PhotoListFragment.Callback mCallback;
     private PhotoChildEventListener mPhotosMine;
@@ -29,7 +29,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
     private DatabaseReference mPhotosRef;
     private String mUid;
 
-    public PhotoAdapter(PhotoListFragment.Callback callback, Context context, PhotoListFragment fragment,String uid) {
+    public PhotoAdapter(PhotoListFragment.Callback callback, Context context, PhotoListFragment fragment, String uid) {
         mUid = uid;
         mCallback = callback;
         mPhotos = new ArrayList<>();
@@ -37,18 +37,28 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
         mPhotosMine = new PhotoChildEventListener();
         mPhotosAll = new PhotoChildEventListener();
         mPhotosRef = FirebaseDatabase.getInstance().getReference().child("photos");
-        mPhotosRef.addChildEventListener(mPhotosAll);
+//        mPhotosRef.addChildEventListener(mPhotosAll);
         mPhotosRef.orderByChild("uid").equalTo(mUid)
                 .addChildEventListener(mPhotosMine);
         mPhotos = mPhotosMine;
     }
 
-
     public void toggleShowAll(boolean showAll) {
-        if (showAll)
+        mPhotos.clear();
+        if (showAll) {
+            if (mPhotosMine != null) {
+                mPhotosRef.orderByChild("uid").equalTo(mUid).removeEventListener(mPhotosMine);
+            }
+            mPhotosRef.addChildEventListener(mPhotosAll);
             mPhotos = mPhotosAll;
-        else
+        } else {
+            if (mPhotosAll != null) {
+                mPhotosRef.removeEventListener(mPhotosAll);
+            }
+            mPhotosRef.orderByChild("uid").equalTo(mUid).addChildEventListener(mPhotosMine);
             mPhotos = mPhotosMine;
+        }
+
         notifyDataSetChanged();
     }
 
@@ -60,7 +70,9 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
+
         final Photo photo = mPhotos.get(position);
+        Log.d(Constants.TAG,photo.getCaption());
         holder.mCaptionTextView.setText(photo.getCaption());
         holder.mUrlTextView.setText(photo.getUrl());
     }
@@ -83,10 +95,11 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
     public void update(Photo photo, String caption, String url) {
         photo.setCaption(caption);
         photo.setUrl(url);
+        Log.d(Constants.TAG, "Updating. Key = " + photo.getKey());
         mPhotosRef.child(photo.getKey()).setValue(photo);
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    public class ViewHolder extends RecyclerView.ViewHolder {
 
         private TextView mCaptionTextView;
         private TextView mUrlTextView;
@@ -122,7 +135,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
             Photo photo = dataSnapshot.getValue(Photo.class);
             photo.setKey(dataSnapshot.getKey());
-            mPhotos.add(0, photo);
+            this.add(0, photo);
             notifyDataSetChanged();
             Log.d("add", "add one");
         }
@@ -131,8 +144,8 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
             String key = dataSnapshot.getKey();
             Photo newPhoto = dataSnapshot.getValue(Photo.class);
-            for(Photo wp : mPhotos){
-                if(wp.getKey().equals(key)){
+            for (Photo wp : this) {
+                if (wp.getKey().equals(key)) {
                     wp.setValues(newPhoto);
                     break;
                 }
@@ -144,9 +157,9 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
         @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
             String key = dataSnapshot.getKey();
-            for (Photo wp : mPhotos){
-                if (key.equals(wp.getKey())){
-                    mPhotos.remove(wp);
+            for (Photo wp : this) {
+                if (key.equals(wp.getKey())) {
+                    this.remove(wp);
                     notifyDataSetChanged();
                     break;
                 }
@@ -159,14 +172,15 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder>{
         }
 
 
-
         @Override
         public void onCancelled(DatabaseError databaseError) {
-            Log.e(Constants.TAG,"DataBase error: " + databaseError);
+            Log.e(Constants.TAG, "DataBase error: " + databaseError);
         }
     }
+
     interface Callback {
         void onDisplay(Photo photo);
+
         void showAddEditDeleteDialog(Photo photo);
     }
 
